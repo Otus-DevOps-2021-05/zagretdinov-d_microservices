@@ -1,5 +1,5 @@
 /.idea/
-packer/key.json
+key.json
 variables.json
 *.tfstate
 *.tfstate.*.backup
