@@ -1,0 +1,10 @@
+- name: Configure App
+  hosts: dockerhosts
+  become: true
+  tasks:
+    - name: Start reddit app container
+      community.docker.docker_container:
+        name: reddit
+        image: zagretdinov/otus-reddit:1.0
+        published_ports:
+          - '9292:9292'

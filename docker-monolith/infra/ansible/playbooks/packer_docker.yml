@@ -1,0 +1,25 @@
+---
+- name: Install Ruby && Bundler
+  hosts: all
+  become: true
+  roles:
+    - geerlingguy.docker
+  tasks:
+    - name: Install python lib
+      apt:
+        update_cache: yes
+        name:
+          - python3-docker
+
+#- name: Install ruby
+#  hosts: all
+#  become: yes
+#  tasks:
+#    - name: Install required packages
+#      apt:
+#        update_cache: yes
+#        name:
+#          - git
+#          - ruby-full
+#          - ruby-bundler
+#          - build-essential
