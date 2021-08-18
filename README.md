@@ -92,6 +92,7 @@ SIGKILL - безусловное завершение процесса
 
 ![изображение](https://user-images.githubusercontent.com/85208391/129981147-633d8fe5-94ff-4223-b8ea-22780b140d19.png)
 
+Создаю docker machine
 ![изображение](https://user-images.githubusercontent.com/85208391/129981185-0b6eb851-8bb9-48ae-8078-77f2de9e59b7.png)
 
 
@@ -107,6 +108,7 @@ SIGKILL - безусловное завершение процесса
 
 ```newgrp docker```
 
+Инициализировал окружения
 ![изображение](https://user-images.githubusercontent.com/85208391/129981609-4d820e77-f0f1-485b-af8b-0e57fdcc7c4e.png)
 
 ![изображение](https://user-images.githubusercontent.com/85208391/129981672-67d45fae-0b1e-4144-81da-7e848cb6fc4b.png)
@@ -125,11 +127,27 @@ docker run --rm --pid host -ti tehbilly/htop
 
 ![изображение](https://user-images.githubusercontent.com/85208391/129981808-8b204286-4e43-4448-90f2-622539bbc072.png)
 
+Для работы с машиной выполняю команду
+``` eval $(docker-machine env docker-host) ```
 
 ## Структура репозитория
 Требуемые четыре файла были созданы согласно заданитя
 
 ## Сборка образа
+
+![изображение](https://user-images.githubusercontent.com/85208391/129982396-996fbc23-13af-40d9-a02a-994dc2cd3710.png)
+
+Запускаю контейнер
+docker run --name reddit -d --network=host reddit:latest
+
+проверяю
+![изображение](https://user-images.githubusercontent.com/85208391/129983033-36b062c0-5ca1-4ea3-b137-6ca765ff1391.png)
+
+## Docker hub
+
+![изображение](https://user-images.githubusercontent.com/85208391/129983236-564243bf-ce1c-4b3d-a2da-1a9376076643.png)
+
+
 
 
 
