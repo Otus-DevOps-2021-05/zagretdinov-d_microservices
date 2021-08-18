@@ -63,31 +63,73 @@ attach подсоединяет терминалк созданному конт
 
 ![изображение](https://user-images.githubusercontent.com/85208391/129980389-7fcfdd84-fb4d-448b-8609-40e8cf4dc681.png)
 
- 
- 
- 
- 
- 
- Прежде чем установливать и начать работу с Docker группу пользователей  
+ ## Docker kill & stop
+kill сразу посылает SIGKILL
+stop посылает SIGTERM, и через 10 секунд (настраивается) посылает SIGKILL 
+SIGTERM - сигнал остановки приложения
+SIGKILL - безусловное завершение процесса
+
+## Docker kill
+![изображение](https://user-images.githubusercontent.com/85208391/129980586-53f507ff-6ba9-4e5f-8f16-e02340e6bbee.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/129980598-40cecdbd-1688-4418-a4c2-1325245137c1.png)
+
+## docker system df
+
+    • Отображает сколько дискового пространства занято образами, контейнерами и volume’ами 
+    • Отображает сколько из них не используется и возможно удалить 
+
+![изображение](https://user-images.githubusercontent.com/85208391/129980726-35670ab2-88ea-4e83-8932-e5380ea6555a.png)
+
+## docker rm & rmi
+
+    • rm удаляет контейнер, можно добавить флаг -f, чтобы удалялся работающий container(будет послан sigkill) 
+    • rmi удаляет image, если от него не зависят запущенные контейнеры 
+
+ ![изображение](https://user-images.githubusercontent.com/85208391/129980828-967d5726-548c-402a-af51-9f59ae8965f0.png)
+
+## Docker-контейнеры
+
+![изображение](https://user-images.githubusercontent.com/85208391/129981147-633d8fe5-94ff-4223-b8ea-22780b140d19.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/129981185-0b6eb851-8bb9-48ae-8078-77f2de9e59b7.png)
+
+
+Чтоб не использовать sudo cоздаю Docker - группу пользователей  
 
 ``` sudo groupadd docker ```
 
 и добавлю своего плользователя.
 
 ``` sudo usermod -aG docker $USER ```
+
 чтоб не вполнять перезагрузку пк 
 
 ```newgrp docker```
 
+![изображение](https://user-images.githubusercontent.com/85208391/129981609-4d820e77-f0f1-485b-af8b-0e57fdcc7c4e.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/129981672-67d45fae-0b1e-4144-81da-7e848cb6fc4b.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/129981704-8b3cc3f5-598f-430a-ad46-8d616732ebc6.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/129981730-07ea4e40-9aba-4d13-9dba-d6aaa65ff53f.png)
+
+## Повторение практики из демона лекции 
+
+И сравните сами вывод:
+docker run --rm -ti tehbilly/htop
+docker run --rm --pid host -ti tehbilly/htop
+
+![изображение](https://user-images.githubusercontent.com/85208391/129981803-d2ec4120-df4e-49e7-b980-7beaf32e87d2.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/129981808-8b204286-4e43-4448-90f2-622539bbc072.png)
 
 
+## Структура репозитория
+Требуемые четыре файла были созданы согласно заданитя
 
-
-
-
-
-
-
+## Сборка образа
 
 
 
