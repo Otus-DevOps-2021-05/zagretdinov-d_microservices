@@ -1,8 +1,8 @@
 # zagretdinov-d_microservices
 zagretdinov-d microservices repository
 
-## Docker-образы Микросервисы
-# Подготовка
+# Docker-образы Микросервисы
+## Подготовка
 Заранее были скачены готовые репозитории и распакованны.
 Новая структура приложения.
 Три компонента - post-py (написание постов), comment (комментарии), ui (веб-интерфейс) 
@@ -50,7 +50,7 @@ ENV COMMENT_DATABASE comments
 
 CMD ["puma"]
 ```
-# ui/dockerfile
+### ui/dockerfile
 ```
 FROM ruby:2.3-alpine
 
@@ -79,12 +79,12 @@ CMD ["puma"]
 
 ![изображение](https://user-images.githubusercontent.com/85208391/130621379-eb4591dc-8ebb-42b0-ad30-476a2564bba2.png)
 
-# сборка образов с компонентами
+### сборка образов с компонентами
 ```
 ocker build -t zagretdinov/comment:2.0-alpine ./comment
 docker build -t zagretdinov/ui:2.0-alpine ./ui
 ```
-# post 1.0 работал некорректно, поэтому сразу заменен на 2.0
+### post 1.0 работал некорректно, поэтому сразу заменен на 2.0
 
 ```
 docker build -t zagretdinov/post:1.0 ./post-py
@@ -94,7 +94,7 @@ docker build -t zagretdinov/post:1.0 ./post-py
 
 ## Запуск контейнеров
 
-# Запуск микросервисов
+### Запуск микросервисов
 
 создание специальной bridge-сети для приложения (для того, чтобы можно было использовать сетевые алиасы)
 
@@ -136,7 +136,7 @@ docker run -d --network=reddit --network-alias=comment1 -e COMMENT_DATABASE_HOST
 docker run -d --network=reddit -e POST_SERVICE_HOST='post1' -e COMMENT_SERVICE_HOST='comment1' -p 9292:9292 zagretdinov/ui:2.0-alpine
 ```
 
-# Уменьшение размеров образов 
+### Уменьшение размеров образов 
 размер образа UI можно уменьшить, изменив dockerfile
 
 ```
@@ -167,7 +167,7 @@ CMD ["puma"]
 ## Присоединение Volume для хранения БД постов.
 удалив-стерев (kill) контейнеры и создав их заново, теряются все старые посты
 
-# Создание docker volume
+### Создание docker volume
 ```
 docker volume create reddit_db
 docker run -d --network=reddit --network-alias=post_db --network-alias=comment_db -v reddit_db:/data/db mongo:latest
@@ -176,22 +176,3 @@ docker run -d --network=reddit --network-alias=comment zagretdinov/comment:2.0-a
 docker run -d --network=reddit -p 9292:9292 zagretdinov/ui:2.0-alpine
 ```
 ![изображение](https://user-images.githubusercontent.com/85208391/130632780-a3a2e6d9-1cf4-4574-be3d-f3e79aa13615.png)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
