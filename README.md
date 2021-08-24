@@ -28,7 +28,7 @@ ENTRYPOINT ["python3", "post_app.py"]
 
 ```
 
-# comment/dockerfile
+### comment/dockerfile
 ```
 FROM ruby:2.3-alpine
 
