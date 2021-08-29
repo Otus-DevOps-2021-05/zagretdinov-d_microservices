@@ -40,12 +40,24 @@ docker run -d --network=reddit zagretdinov/post:1.0
 docker run -d --network=reddit zagretdinov/comment:2.0-alpine
 docker run -d --network=reddit -p 9292:9292 zagretdinov/ui:2.0-alpine
 ```
+При открытии приложения получил ошибку
 
+![изображение](https://user-images.githubusercontent.com/85208391/131251774-c447a422-ac99-4db3-b2e4-48ac66a63665.png)
 
+Сервисы ссылаются друг на друга по dns именам, прописанным в ENV-переменных (см Dockerfile). В текущей инсталляции встроенный DNS docker не знает ничего об этих именах.
+Проблема решается присвоения контейнерам имен или сетевых алиасов при старте:
+```
+docker run -d --network=reddit --network-alias=post_db --network-alias=comment_db mongo:latest
+docker run -d --network=reddit --network-alias=post zagretdinov/post:1.0
+docker run -d --network=reddit --network-alias=comment  zagretdinov/comment:2.0-alpine
+docker run -d --network=reddit -p 9292:9292 zagretdinov/ui:2.0-alpine
+```
 
+![изображение](https://user-images.githubusercontent.com/85208391/131252180-c4dd1e54-aa95-43cc-b507-45577d31cc13.png)
 
+Ошибка ушла
 
-
+![изображение](https://user-images.githubusercontent.com/85208391/131252188-23f8383b-9151-42c0-97c4-e75cf6473500.png)
 
 
 
