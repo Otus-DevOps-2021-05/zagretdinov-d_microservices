@@ -24,5 +24,29 @@ eval $(docker-machine env docker-host)
 
 Выполнил на докер хосте, чтобы видеть список namespace:
 
+## Host network driver
+
+![изображение](https://user-images.githubusercontent.com/85208391/131251332-e26b99d2-cadc-43fb-8d5c-cd4948a175e6.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/131251339-7478a88e-4476-49c4-ad9a-97687ba7b4be.png)
+
+## Bridge network driver
+
+Создал bridge-сеть
+
+```
+docker run -d --network=reddit mongo:latest
+docker run -d --network=reddit zagretdinov/post:1.0
+docker run -d --network=reddit zagretdinov/comment:2.0-alpine
+docker run -d --network=reddit -p 9292:9292 zagretdinov/ui:2.0-alpine
+```
+
+
+
+
+
+
+
+
 
 
