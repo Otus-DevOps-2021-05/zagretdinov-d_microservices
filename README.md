@@ -1,188 +1,274 @@
 # zagretdinov-d_microservices
 zagretdinov-d microservices repository
 
-# Docker: сети, docker-compose
-## Подготовка
-Создаю новую ветку docker-4
-Подключаюсь к ранее созданному docker host’у.
-eval $(docker-machine env docker-host)
-![изображение](https://user-images.githubusercontent.com/85208391/131217349-ac12633b-fd5d-47b3-bbaf-a2ae05681eec.png)
+# Устройство Gitlab CI.Построение процесса непрерывной поставки.
 
-# Работа с сетью
-## None network driver
-![изображение](https://user-images.githubusercontent.com/85208391/131217380-88a12b03-ba49-4ec4-9d48-7952f9050bd7.png)
-
-Один сетевой интерфейс - Loopback. Сетевой стек самого контейнера работает (ping localhost), но без возможности контактировать с внешним миром.
-
-Вывод команды docker-machine ssh docker-host ifconfig.
-
-![изображение](https://user-images.githubusercontent.com/85208391/131217404-201cfcb8-c1d3-42d7-9f88-4e9ee81eabaa.png)
-
-Выполнил на докер хосте, чтобы видеть список namespace:
-![изображение](https://user-images.githubusercontent.com/85208391/131217435-afef2d70-0bac-4426-bfce-80bd039e2a84.png)
-
-
-Выполнил на докер хосте, чтобы видеть список namespace:
-
-## Host network driver
-
-![изображение](https://user-images.githubusercontent.com/85208391/131251332-e26b99d2-cadc-43fb-8d5c-cd4948a175e6.png)
-
-![изображение](https://user-images.githubusercontent.com/85208391/131251339-7478a88e-4476-49c4-ad9a-97687ba7b4be.png)
-
-## Bridge network driver
-
-Создал bridge-сеть
-
+## Создаю ветку в репозитории:
 ```
-docker run -d --network=reddit mongo:latest
-docker run -d --network=reddit zagretdinov/post:1.0
-docker run -d --network=reddit zagretdinov/comment:2.0-alpine
-docker run -d --network=reddit -p 9292:9292 zagretdinov/ui:2.0-alpine
+git checkout -b gitlab-ci-1
 ```
-При открытии приложения получил ошибку
-
-![изображение](https://user-images.githubusercontent.com/85208391/131251774-c447a422-ac99-4db3-b2e4-48ac66a63665.png)
-
-Сервисы ссылаются друг на друга по dns именам, прописанным в ENV-переменных (см Dockerfile). В текущей инсталляции встроенный DNS docker не знает ничего об этих именах.
-Проблема решается присвоения контейнерам имен или сетевых алиасов при старте:
+## Поднимаю docker host:
 ```
-docker run -d --network=reddit --network-alias=post_db --network-alias=comment_db mongo:latest
-docker run -d --network=reddit --network-alias=post zagretdinov/post:1.0
-docker run -d --network=reddit --network-alias=comment  zagretdinov/comment:2.0-alpine
-docker run -d --network=reddit -p 9292:9292 zagretdinov/ui:2.0-alpine
+yc compute instance create \
+  --name gitlab-host \
+  --memory=4 \
+  --zone ru-central1-a \
+  --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4 \
+  --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-1804-lts,size=50 \
+  --ssh-key ~/.ssh/zagretdinov.pub
 ```
+## Установка Docker
+docker-machine create \  
+--driver generic \  
+--generic-ip-address=62.84.112.231 \  
+--generic-ssh-user yc-user \  
+--generic-ssh-key ~/.ssh/zagretdinov \  
+docker-host
 
-![изображение](https://user-images.githubusercontent.com/85208391/131252180-c4dd1e54-aa95-43cc-b507-45577d31cc13.png)
-
-Ошибка ушла
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252188-23f8383b-9151-42c0-97c4-e75cf6473500.png)
-
-Запускаю проект в двух bridge сетях, чтобы ui не имел доступа к db.
-
-Остановил контейнеры:
-
-``` docker kill $(docker ps -q) ```
-
-Создадаю docker-сети
-
+## Установка GitLab-CE
+Подключаюсь к хосту и создаю необходимые каталоги:
 ```
-docker network create back_net --subnet=10.0.2.0/24 
-docker network create front_net --subnet=10.0.1.0/24
+ssh yc-user@62.84.112.231
+sudo mkdir -p /srv/gitlab/config /srv/gitlab/data /srv/gitlab/logs
+
+cd /srv/gitlab
+sudo touch docker-compose.yml
+```
+```
+sudo vim docker-compose.yml
+
+web:
+  image: 'gitlab/gitlab-ce:latest'
+  restart: always
+  hostname: 'localhost'
+  environment:
+    GITLAB_OMNIBUS_CONFIG:
+      external_url 'http://62.84.112.231'
+  ports:
+    - '80:80'
+    - '443:443'
+    - '2222:22'
+  volumes:
+    - '/srv/gitlab/config:/etc/gitlab'
+    - '/srv/gitlab/logs:/var/log/gitlab'
+    - '/srv/gitlab/data:/var/opt/gitlab'
 ```
 
-![изображение](https://user-images.githubusercontent.com/85208391/131252469-920a868d-d59a-4e70-a4b2-8fb09e6efca5.png)
+Запустим gitlab через docker-compose:
+```
+sudo docker-compose up -d
+```
+![изображение](https://user-images.githubusercontent.com/85208391/132757650-7ecbcee0-0d24-4036-8617-622c945e1fc3.png)
+
+теперь можно проверить: http://62.84.112.231
+
+
+Произвел сброс пароля: 
+```
+sudo touch /srv/gitlab/config/initial_root_password
+sudo cat /srv/gitlab/config/initial_root_password
+```
+Пароль используем его для пользоватля root.
+
+## Настройка:
+
+Отключаю регистрацию новых пользователей:
+```
+Settings -> General -> Sign-up restrictions 
+
+[ ] Sign-up enabled
+```
+Создаю группу:
+```
+Name - homework
+Description - Projects for my homework
+Visibility - private
+```
+Создаю проект: example
+
+Для выполнения push с локального хоста в gitlab выполним (Добавление remote):
 
 ```
-docker run -d --network=front_net -p 9292:9292 --name ui zagretdinov/ui:2.0-alpine
-docker run -d --network=back_net --name comment zagretdinov/comment:2.0-alpine
-docker run -d --network=back_net --name post zagretdinov/post:1.0
-docker run -d --network=back_net --name mongo_db --network-alias=post_db --network-alias=comment_db mongo:latest
+git remote add gitlab http://62.84.112.231/homework/example.git
+git push gitlab gitlab-ci-1
 ```
-При открытие приложения в браузере получил ошибку
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252486-d85cfe75-87df-4d2e-b46f-ccb4691c70b3.png)
-
-Docker при инициализации контейнера может подключить к нему только одну сеть. При этом контейнеры из соседних сетей не будут доступны как в DNS, так и для взаимодействия по сети.
-
-Поэтому нужно поместить контейнеры post и comment в обе сети.
-
-Подключил контейнеры ко второй сети:
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252590-0d02e16d-b1e3-49e9-b745-c3e376140c74.png)
-
-теперь все работает
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252595-1cff0d54-fda8-4265-a795-ce16a22343bb.png)
-
-Посмотрим, как выглядит сетевой стек Linux в текущий момент.
-Зашел на докер-хост и установил bridge-utils:
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252794-fdece3ac-7417-4f9a-9593-e0054221ed9c.png)
-
-и выполняю согласно порядка заданий:
-```
-sudo apt-get update && sudo apt-get install bridge-utils
-```
-![изображение](https://user-images.githubusercontent.com/85208391/131252814-bfab155b-8fe9-4230-a288-8f5384e94018.png)
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252904-13a779bf-5c13-4e8c-b47a-d0831ac2d4a7.png)
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252907-44f819a1-5b56-42b8-8806-029c5ad27a0c.png)
-
-на iptables
-``` sudo iptables -nL -t nat ```
-
-Нас интересует цепочка POSTROUTING
-
-![изображение](https://user-images.githubusercontent.com/85208391/131252924-874e1298-7e36-4290-a194-e2a0a9c02988.png)
-
-В ходе работы была необходимость публикации порта контейнера UI (9292) для доступа к нему снаружи. Посмотрим, что Docker при этом сделал в iptables:
-
-Строчка DNAT.
-![изображение](https://user-images.githubusercontent.com/85208391/131252968-47d7a5b4-e5af-4425-97f8-32840481e1b4.png)
-
-запущен docker-proxy.
-![изображение](https://user-images.githubusercontent.com/85208391/131252980-b3f08a01-2a82-4c6d-8c7d-117910b418ed.png)
-
-## Docker-compose
-
-Проблемы:
-    • Одно приложение состоит из множества контейнеров/сервисов 
-    • Один контейнер зависит от другого 
-    • Порядок запуска имеет значение 
-    • docker build/run/create … (долго и много) 
-# docker-compose - отдельная утилита, позволяет декларативно описывать докер-инфраструктуры в yaml и управлять многоконтейнерными приложениями.
-
-Создал src/docker-compose.yml:
+Пайплайн для GitLab определяется в файле .gitlab-ci.yml
 
 ```
-version: '3.3'
-services:
-  post_db:
-    image: mongo:3.2
-    volumes:
-      - post_db:/data/db
-    networks:
-      - reddit
-  ui:
-    build: ./ui
-    image: ${USERNAME}/ui:2.0
-    ports:
-      - 9292:9292/tcp
-    networks:
-      - reddit
-  post:
-    build: ./post-py
-    image: ${USERNAME}/post:1.0
-    networks:
-      - reddit
-  comment:
-    build: ./comment
-    image: ${USERNAME}/comment:2.0
-    networks:
-      - reddit
-volumes:
-  post_db:
-networks:
-  reddit:
+stages:
+  - build
+  - test
+  - deploy
+
+build_job:
+  stage: build
+  script:
+    - echo 'Building'
+
+test_unit_job:
+  stage: test
+  script:
+    - echo 'Testing 1'
+
+test_integration_job:
+  stage: test
+  script:
+    - echo 'Testing 2'
+
+deploy_job:
+  stage: deploy
+  script:
+    - echo 'Deploy'
 ```
-Останавливаю 
+Пушу:
 ```
-docker kill $(docker ps -q)
+git add .gitlab-ci.yml
+git commit -m 'add pipeline definition'
+git push gitlab gitlab-ci-1
 ```
-Экспортировал переменную USERNAME:
+Добавляю раннера
 
-``` export USERNAME=fresk ```
+На сервере Gitlab CI, выполняю:
+```
+ssh yc-user@62.84.112.231
 
-Запустил контейнеры:
+sudo docker run -d --name gitlab-runner --restart always -v /srv/gitlabrunner/config:/etc/gitlab-runner -v /var/run/docker.sock:/var/run/docker.sock gitlab/gitlab-runner:latest
+```
 
-``` docker-compose up -d ```
+Регистрация раннера (указываем url сервера gitlab и токен из Settings -> CI/CD -> Pipelines -> Runners ):
 
+```
+sudo docker exec -it gitlab-runner gitlab-runner register \
+ --url http://62.84.112.231/ \
+ --non-interactive \
+ --locked=false \
+ --name DockerRunner \
+ --executor docker \
+ --docker-image alpine:latest \
+ --registration-token  \
+ --tag-list "linux,xenial,ubuntu,docker" \
+ --run-untagged
+ ```
 
-проверил список контейнеров:
+Если все успешно, то должен появится новый ранер в Settings -> CI/CD -> Pipelines -> Runners секция Available specific runners и после появления ранера должен выполнится пайплайн.
 
-![изображение](https://user-images.githubusercontent.com/85208391/131254653-18853ff0-7995-4dd5-9cd8-41bd190cede8.png)
+Добавление Reddit в проект
 
-убедился, что проект работает.
+```
+git clone https://github.com/express42/reddit.git && rm -rf ./reddit/.git
+git add reddit/
+git commit -m "Add reddit app"
+git push gitlab gitlab-ci-1
+```
+Изменил описание пайплайна в .gitlab-ci.yml, создаю файл тестов reddit/simpletest.rb:
+
+```
+require_relative './app'
+require 'test/unit'
+require 'rack/test'
+
+set :environment, :test
+
+class MyAppTest < Test::Unit::TestCase
+  include Rack::Test::Methods
+
+  def app
+    Sinatra::Application
+  end
+
+  def test_get_request
+    get '/'
+    assert last_response.ok?
+  end
+end
+```
+Добавил библиотеку rack-test в reddit/Gemfile:
+```
+gem 'rack-test'
+```
+## Окружения
+
+Добавиk в .gitlab-ci.yml новые окружения и условия запусков для ранеров
+```
+image: ruby:2.4.2
+
+stages:
+  - build
+  - test
+  - review
+  - stage
+  - production
+
+variables:
+  DATABASE_URL: 'mongodb://mongo/user_posts'
+   
+before_script:
+  - cd reddit
+  - bundle install
+
+build_job:
+  stage: build
+  script:
+    - echo 'Building'
+
+test_unit_job:
+  stage: test
+  services:
+    - mongo:latest
+  script:
+    - ruby simpletest.rb
+
+test_integration_job:
+  stage: test
+  script:
+    - echo 'Testing 2'
+
+deploy_dev_job:
+  stage: review
+  script:
+    - echo 'Deploy'
+  environment:
+    name: dev
+    url: http://dev.example.com
+
+branch review:
+  stage: review
+  script: echo "Deploy to $CI_ENVIRONMENT_SLUG"
+  environment:
+    name: branch/$CI_COMMIT_REF_NAME
+    url: http://$CI_ENVIRONMENT_SLUG.example.com
+  only:
+    - branches
+  except:
+    - master
+
+staging:
+  stage: stage
+  when: manual
+  only:
+    - /^\d+\.\d+\.\d+/
+  script:
+    - echo 'Deploy'
+  environment:
+    name: stage
+    url: http://beta.example.com
+
+production:
+  stage: production
+  when: manual
+  only:
+    - /^\d+\.\d+\.\d+/
+  script:
+    - echo 'Deploy'
+  environment:
+    name: production
+    url: http://example.com
+```
+Для проверки закоммитим файлы с указанием тэга (версии) и запушим в gitlab:
+
+```
+git add .gitlab-ci.yml
+git commit -m '#5 add ver 2.4.10'
+git tag 2.4.10
+git push gitlab gitlab-ci-1 --tags
+```
