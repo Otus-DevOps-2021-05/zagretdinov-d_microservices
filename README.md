@@ -232,3 +232,19 @@ docker-compose up -d
 ## Задание *
 
 ![изображение](https://user-images.githubusercontent.com/85208391/133909599-5a536181-2c06-47fb-80d1-76165e5f7e9e.png)
+
+## Завершение работы
+
+Запушил образы на docker-hub:
+```
+docker push $USER_NAME/ui
+docker push $USER_NAME/comment
+docker push $USER_NAME/post
+docker push $USER_NAME/prometheus 
+```
+
+https://hub.docker.com/repository/docker/zagretdinov/prometheus
+https://hub.docker.com/repository/docker/zagretdinov/post
+https://hub.docker.com/repository/docker/zagretdinov/ui
+https://hub.docker.com/repository/docker/zagretdinov/comment
+
