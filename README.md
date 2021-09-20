@@ -243,8 +243,8 @@ docker push $USER_NAME/post
 docker push $USER_NAME/prometheus 
 ```
 
-https://hub.docker.com/repository/docker/zagretdinov/prometheus
-https://hub.docker.com/repository/docker/zagretdinov/post
-https://hub.docker.com/repository/docker/zagretdinov/ui
-https://hub.docker.com/repository/docker/zagretdinov/comment
+- https://hub.docker.com/repository/docker/zagretdinov/prometheus
+- https://hub.docker.com/repository/docker/zagretdinov/post
+- https://hub.docker.com/repository/docker/zagretdinov/ui
+- https://hub.docker.com/repository/docker/zagretdinov/comment
 
