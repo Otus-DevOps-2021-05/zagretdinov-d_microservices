@@ -232,6 +232,26 @@ networks:
 docker-compose -f docker-compose-logging.yml -f docker-compose.yml down
 docker-compose -f docker-compose-logging.yml -f docker-compose.yml up -d
 ```
-Зашел в веб-интерфейс zipkin
 
+Строго выполнялось все по шагово согласно задания.
+Работа приложения.
+![изображение](https://user-images.githubusercontent.com/85208391/136380884-b9616398-0b41-4d77-b492-a2067b4d9e50.png)
+
+Kibana слушает на порту 5601
+![изображение](https://user-images.githubusercontent.com/85208391/136386128-89ba8f2e-b549-46c8-9081-423314b6041f.png)
+
+Зашел в веб-интерфейс zipkin по порту 9411
+
+![изображение](https://user-images.githubusercontent.com/85208391/136387486-a0a46609-7ce2-4ed1-a685-05821c1a930f.png)
+
+# * Траблшутинг UI-экспириенса
+Собераю образы со сломанным кодом и пересобираю инфраструктуру.
+Запсускаю zipkin и демонстрирую не исправность.
+Вот даная задержка.
+![изображение](https://user-images.githubusercontent.com/85208391/136389545-b023cc7c-abd7-4465-bb19-a4eb30b39e6a.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/136389603-13b25456-0c28-45c2-ba30-361c463eea89.png)
+
+а вот так код выглядит после исправления.
+![изображение](https://user-images.githubusercontent.com/85208391/136389845-3e9f4009-aabc-43f9-9836-7015e10cdc4e.png)
 
