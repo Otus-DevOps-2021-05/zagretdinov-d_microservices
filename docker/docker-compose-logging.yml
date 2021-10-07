@@ -9,7 +9,7 @@ services:
       - back_net      
 
   fluentd:
-    image: ${USER_NAME}/fluentd
+    image: ${USERNAME}/fluentd
     ports:
       - "24224:24224"
       - "24224:24224/udp"
