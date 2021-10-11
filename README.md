@@ -1,259 +1,158 @@
 # zagretdinov-d_microservices
 zagretdinov-d microservices repository
-## Логирование и распределенная трассировка.
-### Подготовка окружения
-```
-yc compute instance create \
-  --name logging \
-  --memory=4 \
-  --zone ru-central1-a \
-  --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4 \
-  --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-1804-lts,size=15 \
-  --ssh-key ~/.ssh/zagretdinov.pub
+## Введение в kubernetes
 
-docker-machine create \
-  --driver generic \
-  --generic-ip-address=62.84.115.246 \
-  --generic-ssh-user yc-user \
-  --generic-ssh-key ~/.ssh/zagretdinov \
-  logging
-```
-Устананавливаю docker-compose на docker хосте
-```
-docker-machine ssh logging
-sudo apt install docker-compose
-eval $(docker-machine env logging)
-```
-Сборка новых образов:
-```
-export USER_NAME='username'
-
-cd ./src/ui && bash docker_build.sh && docker push $USER_NAME/ui:logging
-cd ../post-py && bash docker_build.sh && docker push $USER_NAME/post:logging
-cd ../comment && bash docker_build.sh && docker push $USER_NAME/comment:logging
-```
-## Логирование Docker контейнеров
-## Elastic Stack
-Рассмотрим пример системы централизованного логирования на примере Elastic стека (ранее известного как ELK): который включает в себя 3 осовных компонента:
-
-    ElasticSearch (TSDB и поисковый движок для хранения данных)
-    Logstash (для агрегации и трансформации данных)
-    Kibana (для визуализации)
-Для аггрегации логов вместо Logstash будем использовать Fluentd, получим еще одно популярное сочетание этих инструментов - EFK.
-
-Fluentd - инструмент, который может использоваться для отправки, аггрегации и преобразования лог-сообщений. Fluentd будем использовать для аггрегации (сбора в одном месте) и парсинга логов сервисов нашего приложения.
-
-В директории logging/fluentd создаем Dockerfile:
-```
-FROM fluent/fluentd:v0.12
-RUN gem install fluent-plugin-elasticsearch --no-rdoc --no-ri --version 1.9.5
-RUN gem install fluent-plugin-grok-parser --no-rdoc --no-ri --version 1.0.0
-ADD fluent.conf /fluentd/etc
-```
-Для фаила ``` logging/fluentd/fluent.conf ```
-```
-<source>
-  @type forward
-  port 24224
-  bind 0.0.0.0
-</source>
-
-<match *.**>
-  @type copy
-  <store>
-    @type elasticsearch
-    host elasticsearch
-    port 9200
-    logstash_format true
-    logstash_prefix fluentd
-    logstash_dateformat %Y%m%d
-    include_tag_key true
-    type_name access_log
-    tag_key @log_name
-    flush_interval 1s
-  </store>
-  <store>
-    @type stdout
-  </store>
-</match>
+Создал директорию kubernetes в корне проекта. Внутри нее создал директорию reddit. Создал 4 манифеста.
 
 ```
-Соберем docker image для fluentd:
-```
-cd logging/fluentd
-docker build -t $USER_NAME/fluentd .
-```
+post-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: post
+  template:
+    metadata:
+      name: post
+      labels:
+        app: post
+    spec:
+      containers:
+        - image: zagretdinov/post
+          name: post
 
-## Структурированные логи
+ui-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ui
+  template:
+    metadata:
+      name: ui
+      labels:
+        app: ui
+    spec:
+      containers:
+        - image: zagretdinov/ui
+          name: ui
 
-Логи должны иметь заданную (единую) структуру и содержать необходимую для нормальной эксплуатации данного сервиса информацию о его работе.
+comment-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comment-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: comment
+  template:
+    metadata:
+      name: comment
+      labels:
+        app: comment
+    spec:
+      containers:
+        - image: fresk/comment
+          name: comment
+          
+mongo-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      name: mongo
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - image: mongo:3.2
+          name: mongonetes
+```
+## Поднял 2 VM использовал ОСubuntu 20 на каждую выполнил обоих VM следующию установку.
+```
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
 
-Лог-сообщения также должны иметь понятный для выбранной системы логирования формат, чтобы избежать ненужной траты ресурсов на преобразование данных в нужный вид.
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 
-Для запуска подготовленных контейнеров настроим docker/docker-compose.yml на теги :logging и запустим сервисы:
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-```
-cd docker && docker-compose -f docker-compose.yml up -d
-```
-Посмотреть логи.
-```
-docker-compose logs -f post
-```
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
-Добавил драйвер для fluentd в docker-compose.yml
-```
-  post:
-    ...
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: localhost:24224
-        tag: service.post
-  ```
-  
-Поднял инфраструктуру централизованной системы логирования и перезапустил сервисы приложения
+sudo apt-get update
 
-docker-compose -f docker-compose-logging.yml up -d
-docker-compose down
-docker-compose up -d
+sudo apt-get install docker-ce=5:19.03.15~3-0~ubuntu-focal docker-ce-cli=5:19.03.15~3-0~ubuntu-focal containerd.io kubelet=1.19.14-00 kubeadm=1.19.15-00 kubectl=1.19.15-00
 
-Kibana - инструмент для визуализации и анализа логов от компании Elastic.
-
-## Добавление фильтра во Fluentd для сервиса post
-
-Добавил logging/fluentd/fluent.conf:
-```
-<source>
- @type forward
- port 24224
- bind 0.0.0.0
-</source>
-
-<filter service.post>
- @type parser
- format json
- key_name log
-</filter>
-
-<match *.**>
- @type copy
-
-...
-```
-
-## Неструктурированные логи
-
-Неструктурированные логи отличаются отсутствием четкой структуры данных. Также часто бывает, что формат лог-сообщений не подстроен под систему централизованного логирования, что существенно увеличивает затраты вычислительных и временных ресурсов на обработку данных и выделение нужной информации.
-
-На примере сервиса ui мы рассмотрим пример логов с неудобным форматом сообщений.
-
-Добавил в docker-compose.yml лог-драйвер для ui:
-```
-  ui:
-    ...
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: localhost:24224
-        tag: service.ui
-```
-Перезапустил приложение:
-```
-docker-compose stop ui
-docker-compose rm ui
-docker-compose up -d
-```
-Добавил в fluent.conf парсинг такого лога с помощью регулярных выражений:
-```
-<filter service.ui>
-  @type parser
-  format /\[(?<time>[^\]]*)\]  (?<level>\S+) (?<user>\S+)[\W]*service=(?<service>\S+)[\W]*event=(?<event>\S+)[\W]*(?:path=(?<path>\S+)[\W]*)?request_id=(?<request_id>\S+)[\W]*(?:remote_addr=(?<remote_addr>\S+)[\W]*)?(?:method= (?<method>\S+)[\W]*)?(?:response_status=(?<response_status>\S+)[\W]*)?(?:message='(?<message>[^\']*)[\W]*)?/
-  key_name log
-</filter>
-```
-Пересобрал образ и перезапустил контейнер:
-```
-cd ../logging/fluentd
-docker build -t $USER_NAME/fluentd .
-cd ../../docker
-docker-compose -f docker-compose-logging.yml up -d
-````
-Созданные регулярки могут иметь ошибки, их сложно менять и невозможно читать. Для облегчения задачи парсинга вместо стандартных регулярок можно использовать grok-шаблоны. По-сути grok’и - это именованные шаблоны регулярных выражений (очень похоже на функции). Можно использовать готовый regexp, просто сославшись на него как на функцию docker/fluentd/fluent.conf
-```
-...
-<filter service.ui>
-  @type parser
-  key_name log
-  format grok
-  grok_pattern %{RUBY_LOGGER}
-</filter>
-
-<filter service.ui>
-  @type parser
-  format grok
-  grok_pattern service=%{WORD:service} \| event=%{WORD:event} \| request_id=%{GREEDYDATA:request_id} \| message='%{GREEDYDATA:message}'
-  key_name message
-  reserve_data true
-</filter>
-...
-```
-Распределенный трейсинг
-
-Добавил zipkin в docker-compose-logging.yml
-```
-zipkin:
-    image: openzipkin/zipkin
-    ports:
-      - "9411:9411"
-```
-Добавил для всех сервисов в docker-compose.yml:
-```
-environment:
-  - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
-```
-Добавил в .env
-```
-ZIPKIN_ENABLED=true
-```
-Добавил сети приложения в docker-compose-logging.yml
-```
-  zipkin:
-    ...
-    networks:
-      - front_net
-      - back_net
-...
-networks:
-  back_net:
-  front_net:
-```
-Пересоздал сервисы:
-```
-docker-compose -f docker-compose-logging.yml -f docker-compose.yml down
-docker-compose -f docker-compose-logging.yml -f docker-compose.yml up -d
 ```
 
-Строго выполнялось все по шагово согласно задания.
-Работа приложения.
-![изображение](https://user-images.githubusercontent.com/85208391/136380884-b9616398-0b41-4d77-b492-a2067b4d9e50.png)
+## На node1 выполнил
 
-Kibana слушает на порту 5601
-![изображение](https://user-images.githubusercontent.com/85208391/136386128-89ba8f2e-b549-46c8-9081-423314b6041f.png)
+```
+kubeadm init --apiserver-cert-extra-sans=<PUBLIC_IP> --apiserver-advertise-address=0.0.0.0 --control-plane-endpoint=<PUBLIC_IP> --pod-network-cidr=10.244.0.0/16
+```
 
-Зашел в веб-интерфейс zipkin по порту 9411
+Поднял кластер k8s с помощью kubeadm
 
-![изображение](https://user-images.githubusercontent.com/85208391/136387486-a0a46609-7ce2-4ed1-a685-05821c1a930f.png)
+## На node2
 
-# * Траблшутинг UI-экспириенса
-Собераю образы со сломанным кодом и пересобираю инфраструктуру.
-Запсускаю zipkin и демонстрирую не исправность.
-Вот даная задержка.
+```
+sudo kubeadm join 178.154.240.189:6443 --token ujd6g5.oidc0y6b7brcztnh \
+    --discovery-token-ca-cert-hash sha256:f673a31834cec6ef588ac1c70393d7b8ec8f92392bc865d5fa89cee0d32e02fd
+```
 
-![изображение](https://user-images.githubusercontent.com/85208391/136389545-b023cc7c-abd7-4465-bb19-a4eb30b39e6a.png)
+Создаю конфиг файл для пользователя на мастер ноде:
 
-![изображение](https://user-images.githubusercontent.com/85208391/136389603-13b25456-0c28-45c2-ba30-361c463eea89.png)
+```
+mkdir $HOME/.kube/
+sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $USER $HOME/.kube/config
+```
+В результате проверяю node
 
-а вот так код выглядит после исправления.
+![изображение](https://user-images.githubusercontent.com/85208391/136695202-9b39c12e-2690-4610-8989-f1c0f1aef0bd.png)
 
-![изображение](https://user-images.githubusercontent.com/85208391/136389845-3e9f4009-aabc-43f9-9836-7015e10cdc4e.png)
+ноды находятся в статусе NotReady
+
+![изображение](https://user-images.githubusercontent.com/85208391/136696114-558f3db1-092f-4382-b8f0-a4f4a73c94ef.png)
+
+
+Не установлен сетевой плагин.
+
+```
+curl https://docs.projectcalico.org/manifests/calico.yaml -O
+
+раскомментируем переменную CALICO_IPV4POOL_CIDR в манифесте и установить для нее то же значение, что и в команде init: 10.244.0.0/16
+
+kubectl apply -f calico.yaml
+```
+![изображение](https://user-images.githubusercontent.com/85208391/136696190-2651d2d3-b652-4aef-a582-a5686c99ddcf.png)
+
+Запустил один из манивесьтов
+
+![изображение](https://user-images.githubusercontent.com/85208391/136696209-13285fab-0e15-4698-9da1-699f90bfea84.png)
+
+## Установка кластера k8s с помощью terraform и ansible.
+Terraform создает 3 ноды. Ansible с помощью ролей устанавливает kubernetes.
+буду краток демонстрирую сразу результат.
+
+![изображение](https://user-images.githubusercontent.com/85208391/136696574-74310947-f628-440b-94bb-ee006135b4fa.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/136696686-ed689833-a06c-4b41-ae6b-2934fc598e11.png)
 
