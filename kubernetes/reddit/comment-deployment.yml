@@ -21,4 +21,8 @@ spec:
     spec:
       containers:
       - image: zagretdinov/comment
-        name: comment
+        name: comment        
+        env:
+        - name: COMMENT_DATABASE_HOST
+          value: comment-db
+        
