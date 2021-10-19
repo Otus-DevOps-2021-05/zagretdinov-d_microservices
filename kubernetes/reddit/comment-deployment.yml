@@ -22,22 +22,3 @@ spec:
       containers:
       - image: zagretdinov/comment
         name: comment
-
-
-
-#metadata:
-#  name: comment-deployment
-#spec:
-#  replicas: 1
-#  selector:
-#    matchLabels:
-#      app: comment
-#  template:
-#    metadata:
-#      name: comment
-#      labels:
-#        app: comment
-#    spec:
-#      containers:
-#        - image: zagretdinov/comment
-#          name: comment
