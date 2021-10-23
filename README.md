@@ -5,9 +5,11 @@ zagretdinov-d microservices repository
 Устанавливаю kubectl и minikube
 
 https://kubernetes.io/docs/tasks/tools/install-kubectl/
+
 https://kubernetes.io/docs/tasks/tools/install-minikube/
 
 Проверяю:
+
 ![изображение](https://user-images.githubusercontent.com/85208391/138560696-7e4b8d30-db68-44d9-80dd-a8b4dd92d339.png)
 
 Разворачиваем Kubernetes локально для работы Minikube использовал virtualbox.
@@ -34,31 +36,24 @@ kubectl cluster-info
 
 ![изображение](https://user-images.githubusercontent.com/85208391/138562472-b6b86797-b41b-4b22-b043-d90a0b9c2775.png)
 
+Minikube может выдавать web-страницы с сервисами, которые былипомечены типом NodePort
+
 ![изображение](https://user-images.githubusercontent.com/85208391/138562500-0766b998-c69c-4671-a2ed-729c451fb672.png)
 
+## Работа приложения в Yandex.cloud
+Разворачиваю kubernetes через платформу Yandex Cloud и получаем в результате:
 
+![изображение](https://user-images.githubusercontent.com/85208391/138563679-60f1f270-b374-401f-8392-378af3549d4a.png)
 
+![изображение](https://user-images.githubusercontent.com/85208391/138563683-9400aa2f-8333-4441-b40c-424a4dacb888.png)
 
+Запустил приложение в K8s. Создал dev namespace и задеплоим наше приложение.
 
+![изображение](https://user-images.githubusercontent.com/85208391/138564206-1e719ec7-a8d4-4ff8-9e6b-6f3c4fa84fb3.png)
 
+![изображение](https://user-images.githubusercontent.com/85208391/138564214-dbbcb1ba-7084-481b-bb67-9c42f4fcb00a.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+![изображение](https://user-images.githubusercontent.com/85208391/138564219-0a63ae87-7180-4635-9b07-78c3ff876236.png)
 
 
 
