@@ -71,9 +71,36 @@ $ kubectl apply -f ui-ingress.yml -n dev
 
 ## Задание со *
 
-Опишите создаваемый объект Secret в виде Kubernetes-манифеста
+Создаваемый объект Secret в виде Kubernetes-манифеста описывается по ссылке
+https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+
+![изображение](https://user-images.githubusercontent.com/85208391/139170873-6000bb03-77a8-43b7-8ebf-ce082d5f2ca4.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/139170899-7d6f8368-e234-4249-94d5-d037556a70ca.png)
+
+## Хранилище для базы
+
+Cоздаю диск PersitentVolume в ya.cloud
+
+```
+yc compute disk create \
+ --name k8s \
+ --zone ru-central1-a \
+ --size 4 \
+ --description "disk for k8s"
+```
+![изображение](https://user-images.githubusercontent.com/85208391/139171053-237c1a40-1bd5-43fe-8e17-e39053accef8.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/139171192-381b9f8e-19d9-44ae-a193-7d2c5bb2c625.png)
 
 
+Создаю и собираю необходимые файлы конфигурации.
 
+![изображение](https://user-images.githubusercontent.com/85208391/139171612-14c41827-8cd6-4f39-92b8-38dc88895a5e.png)
 
+![изображение](https://user-images.githubusercontent.com/85208391/139171637-52025d65-c644-44f9-91fd-5a56c949ef99.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/139171649-94a7e250-3b0d-4f02-83b6-618a8eb4ba2e.png)
+
+![изображение](https://user-images.githubusercontent.com/85208391/139171654-9956daf3-02d5-4647-934d-f3252540fef8.png)
 
