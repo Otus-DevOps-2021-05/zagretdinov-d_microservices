@@ -1,5 +1,5 @@
 # zagretdinov-d_microservices
-zagretdinov-d microservices repository
+zagretdinov-d microservices repository]
 
 ## Технология контейнеризации. Введение в Docker
 Создал новую ветку docker-2 в вашем microservices репозитории в организации DevOps 2020-05.
